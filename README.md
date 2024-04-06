@@ -20,7 +20,7 @@ The tool re-creates this structure in an SQLite database but stores only the nec
 1. Clone the repository and navigate to the project folder
 
 ```bash
-git clone 
+git clone https://github.com/ghxm/haveyoursay.git
 cd haveyoursay
 ```
 
