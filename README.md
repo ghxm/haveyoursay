@@ -45,9 +45,9 @@ The common options are:
 
 Replace <mode> with one of the following options:  
 
-`collect`: Collects data from the European Commission Have Your Say website. This should be run first. Use `--update` to only request data not already in the database and `--wait` to specify seconds to wait in between requests. 
-`download`: Downloads publication and feedback attachments from the collected data. Use `--directory` to specify the output directory for the attachments. Use `--only` to specify the type(s) of documents to download (default is both publication and feedback attachments). Attachments can be further filtered by `--publication-type` and `--language` to reduce the number of files to download.
-`dataset`: Creates datasets from the collected data and output them as csv files. Use --directory to specify the output directory for the dataset, --attachments to include attachment datasets, --only to specify the type(s) of documents to create datasets for, and --merge to merge all datasets into a single dataset. 
+- `collect`: Collects data from the European Commission Have Your Say website. This should be run first. Use `--update` to only request data not already in the database and `--wait` to specify seconds to wait in between requests.
+- `download`: Downloads publication and feedback attachments from the collected data. Use `--directory` to specify the output directory for the attachments. Use `--only` to specify the type(s) of documents to download (default is both publication and feedback attachments). Attachments can be further filtered by `--publication-type` and - `--language` to reduce the number of files to download.
+- `dataset`: Creates datasets from the collected data and output them as csv files. Use --directory to specify the output directory for the dataset, --attachments to include attachment datasets, --only to specify the type(s) of documents to create datasets for, and --merge to merge all datasets into a single dataset. 
 
 See the help message for more information:
 
