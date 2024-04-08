@@ -132,7 +132,7 @@ def url_open(url, headers=[]):
         return opener.open(url)
     except (urllib.error.URLError, ConnectionResetError) as e:
         # in case of an internal server error, wait 3 minutes and try again
-        if int(e.code) == 500:
+        if hasattr(e, 'code') and int(e.code) == 500:
             time.sleep(3*60)
             return opener.open(url)
         else:
