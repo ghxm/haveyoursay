@@ -54,7 +54,7 @@ if __name__ == "__main__":
     parser_collect.set_defaults(func=collect)
 
     parser_download = subparsers.add_parser('download', help='Download publication and feedback attachments from the European Commission Have Your Say website.')
-    parser_download.add_argument('-d', '--directory', type=str, default='', help='Directory to save attachments to. Defaults to current working directory.')
+    parser_download.add_argument('-d', '--directory', type=str, default='./', help='Directory to save attachments to. Defaults to current working directory.')
     parser_download.add_argument('-w', '--wait', type=float, default=0, help='Seconds to wait inbetween requests. Default is 0 seconds.')
     parser_download.add_argument('-o', '--only', nargs='+', default=None, help='Only download attachments for the specified type(s) of documents. Possible values are "publication" (attachments) or "feedback" (attachments). Default is None (will download all attachments).')
     parser_download.add_argument('-f', '--force', action="store_true", help='Force download of all attachments, even if they already exist. By default, only non-existing files will be downloaded.')
@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
     # create the parser for the "dataset" command
     parser_dataset = subparsers.add_parser('dataset', help='Create datasets from the collected data. By default, this will create distinct (meta-)datasets for initiatives, publications and feedback.')
-    parser_dataset.add_argument('-d', '--directory', type=str, default='', help='Output directory for the dataset. Defaults to current working directory.')
+    parser_dataset.add_argument('-d', '--directory', type=str, default='./', help='Output directory for the dataset. Defaults to current working directory.')
     parser_dataset.add_argument('-a', '--attachments', action='store_true', help='Include attachment datasets. Default is False.')
     parser_dataset.add_argument('-o', '--only', nargs='+', default=None, help='Only create datasets for the specified type(s) of documents. Possible values are "initiative", "publication" or "feedback". Default is None (will create all datasets).')
     parser_dataset.add_argument('-m', '--merge', action='store_true', help='Merge all datasets into a single dataset. Default is False.')
