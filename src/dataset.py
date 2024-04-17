@@ -6,6 +6,20 @@ import csv
 
 logger = logging.getLogger(__name__)
 
+
+def write_dataset(df, filepath, format='csv', index=False, quoting=csv.QUOTE_NONNUMERIC, escapechar='\\'):
+    # if filepath has no extension, add the format as extension
+    filename = filepath.split('/')[-1]
+    if '.' not in filename:
+        filepath = f'{filepath}.{format}'
+
+    if format == 'csv':
+        df.to_csv(filepath, index=index, quoting=quoting, escapechar=escapechar)
+    elif format == 'json':
+        df.to_json(filepath, orient='records')
+    else:
+        raise ValueError(f'Invalid format: {format}')
+
 @db_decorator
 def create_dataset(c, type, json = False, attachments=False, data=False, directory=None, verbose=False):
 
@@ -101,13 +115,13 @@ def create_dataset(c, type, json = False, attachments=False, data=False, directo
             print(f"Writing {type} {'attachments' if attachments else ''} dataset to {directory}")
         logger.info(f"Writing {type} {'attachments' if attachments else ''} dataset to {directory}")
 
-        filepath = f"{directory}{type if (type=='feedback' or type.endswith('s') or attachments) else type + 's'}{'_attachments' if attachments else ''}.csv"
-        dataset.to_csv(filepath, index=False, quoting=csv.QUOTE_NONNUMERIC, escapechar='\\')
+        filepath = f"{directory}{type if (type=='feedback' or type.endswith('s') or attachments) else type + 's'}{'_attachments' if attachments else ''}"
+        write_dataset(dataset, filepath, format='csv' if not json else 'json')
         if verbose:
             print(f"Dataset written to {filepath}")
         logger.info(f"Dataset written to {filepath}")
 
-def merge_datasets(datasets, directory=None, verbose=False):
+def merge_datasets(datasets, json = False, directory=None, verbose=False):
     # remove all datasets that are None
     datasets = {key: dataset for key, dataset in datasets.items() if dataset is not None}
 
@@ -178,6 +192,8 @@ def merge_datasets(datasets, directory=None, verbose=False):
 
     filepath = f"{directory}haveyoursay.csv"
     merged_dataset.to_csv(filepath, index=False, quoting=csv.QUOTE_NONNUMERIC, escapechar='\\')
+    filepath = f"{directory}haveyoursay"
+    write_dataset(merged_dataset, filepath, format='csv' if not json else 'json')
 
     if verbose:
         print(f"Merged dataset written to {filepath}")
