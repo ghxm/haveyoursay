@@ -190,8 +190,6 @@ def merge_datasets(datasets, json = False, directory=None, verbose=False):
     elif not directory.endswith('/'):
         directory = directory + '/'
 
-    filepath = f"{directory}haveyoursay.csv"
-    merged_dataset.to_csv(filepath, index=False, quoting=csv.QUOTE_NONNUMERIC, escapechar='\\')
     filepath = f"{directory}haveyoursay"
     write_dataset(merged_dataset, filepath, format='csv' if not json else 'json')
 
