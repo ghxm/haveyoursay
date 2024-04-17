@@ -57,6 +57,8 @@ def create_tables(c):
         json_extract(json_each.value, '$.id') AS id,
         json_extract(json_each.value, '$.documentId') AS document_id,
         json_extract(json_each.value, '$.reference') AS reference,
+        json_extract(json_each.value, '$.type') AS work_type,
+        json_extract(json_each.value, '$.workType') AS work_type,
         publications_view.type AS publication_type,
         json_extract(json_each.value, '$.date') AS date,
         json_extract(json_each.value, '$.createdDate') AS created_date,
