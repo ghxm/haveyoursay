@@ -49,6 +49,9 @@ Replace `<mode>` with one of the following options:
 - `download`: Downloads publication and feedback attachments from the collected data. Use `--directory` to specify the output directory for the attachments. Use `--only` to specify the type(s) of documents to download (default is both publication and feedback attachments). Attachments can be further filtered by `--publication-type` and `--language` to reduce the number of files to download.
 - `dataset`: Creates datasets from the collected data and output them as csv files. Use --directory to specify the output directory for the dataset, --attachments to include attachment datasets, --only to specify the type(s) of documents to create datasets for, and --merge to merge all datasets into a single dataset. 
 
+> [!NOTE]
+> Note that the `publications` dataset contains ~ 35 duplicate publications (as of Spring 2024). These are not removed from the dataset to preserve the original data as closely as possible. All publications can be uniquely identified by the `id` field in combination with the `initiative_id` field.
+
 See the help message for more information:
 
 ```bash
@@ -67,4 +70,5 @@ The project is structured as follows:
   - `download.py` - the attachment download module
   - `dataset.py` - the dataset creation module
   - `utils.py` - utility functions
+
 
