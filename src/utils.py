@@ -44,6 +44,7 @@ def create_tables(c):
         json_extract(json_each.value, '$.id') AS id,
         initiatives.id AS initiative_id,
         json_extract(json_each.value, '$.type') AS type,
+        json_extract(json_each.value, '$.receivingFeedbackStatus') AS receiving_feedback_status,
         json_extract(json_each.value, '$.reference') AS reference,
         json_extract(json_each.value, '$.title') AS title,
         json_each.value AS data
