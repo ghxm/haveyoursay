@@ -6,6 +6,7 @@ from pathlib import Path
 import random
 import time
 import sqlite3
+import docx
 
 def db_decorator(func):
     def wrapper(db_path, *args, **kwargs):
@@ -58,7 +59,7 @@ def create_tables(c):
         json_extract(json_each.value, '$.id') AS id,
         json_extract(json_each.value, '$.documentId') AS document_id,
         json_extract(json_each.value, '$.reference') AS reference,
-        json_extract(json_each.value, '$.type') AS work_type,
+        json_extract(json_each.value, '$.type') AS type,
         json_extract(json_each.value, '$.workType') AS work_type,
         publications_view.type AS publication_type,
         json_extract(json_each.value, '$.date') AS date,
@@ -141,8 +142,6 @@ def url_open(url, headers=[]):
         else:
             raise e
 
-
-
 def download_attachment(url, filename):
 
     # create the directory if it doesn't exist
@@ -160,4 +159,108 @@ def download_attachment(url, filename):
 #     ]
 #     return [random.choice(agents)] + [("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"),
 #                                        ("Accept-Language", "en-GB,en-US;q=0.9,en;q=0.8")]
+
+
+def get_file_type(file):
+    first_eight_bytes = file.read(8)
+    file.seek(0)
+    if first_eight_bytes[:4] == b'%PDF':
+        return 'pdf'
+    elif first_eight_bytes[:4] == b'PK\x03\x04':
+        return 'docx'
+    elif first_eight_bytes == b'\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1':
+        return 'doc'
+    else:
+        return None
+
+def pdf_to_text(filepath, library='pdfplumber'):
+    if library.lower() == 'pdfminer.six':
+        try:
+            from pdfminer.high_level import extract_text
+        except ImportError:
+            raise ImportError("The 'pdfminer.six' module is required to extract text from PDFs. Install it with 'pip install pdfminer.six'")
+
+        text = extract_text(filepath)
+
+    # elif library.lower() == 'pypdf':
+    #
+    #     try:
+    #         from pypdf import PdfReader
+    #     except ImportError:
+    #         raise ImportError("The 'pypdf' module is required to extract text from PDFs. Install it with 'pip install pypdf'")
+    #
+    #     with PdfReader(filepath) as pdf:
+    #         text = ''
+    #         for page in pdf.pages:
+    #             text += page.extract_text()
+
+    elif library.lower() == 'pdfplumber':
+
+        try:
+            import pdfplumber
+        except ImportError:
+            raise ImportError("The 'pdfplumber' module is required to extract text from PDFs. Install it with 'pip install pdfplumber'")
+
+        with pdfplumber.open(filepath) as pdf:
+            text = ''
+            for page in pdf.pages:
+                text += page.extract_text()
+
+    elif library.lower() == 'pymupdf':
+        try:
+            import fitz
+        except ImportError:
+            raise ImportError("The 'fitz' module is required to extract text from PDFs. Install it with 'pip install PyMuPDF'")
+
+        with fitz.open(filepath) as pdf:
+            text = ''
+            for page in pdf:
+                text += page.get_text()
+    else:
+        raise ValueError(f"Library {library} not supported")
+
+    return text
+
+
+def docx_to_text(filepath):
+    docx_ = docx.Document(filepath)
+
+    # extract text
+    text = ''
+
+    for paragraph in docx_.paragraphs:
+        text += paragraph.text + '\n'
+
+    return text
+
+
+def extract_text(path, filetype=None, pdf_library='pdfplumber'):
+
+    # open file
+    with open(path, 'rb') as file:
+
+        if not filetype:
+            if path.endswith('.pdf'):
+                filetype = 'pdf'
+            elif path.endswith('.docx'):
+                filetype = 'docx'
+            else:
+                filetype = get_file_type(path)
+
+            if not filetype:
+                # get from path
+                filetype = path.split('.')[-1]
+
+        if not filetype:
+            raise ValueError("Filetype not recognized")
+
+        # extract text
+        if filetype == 'pdf':
+            return pdf_to_text(file, library=pdf_library)
+        elif filetype == 'docx':
+            return docx_to_text(file)
+        else:
+            raise ValueError(f"Filetype {filetype} not supported")
+
+
 

@@ -1,8 +1,11 @@
-from src.utils import db_decorator
+from src.utils import db_decorator, extract_text
 import pandas as pd
+from tqdm import tqdm
 import logging
 import warnings
 import csv
+import os
+from joblib import Parallel, delayed
 
 logger = logging.getLogger(__name__)
 
@@ -118,8 +121,8 @@ def create_dataset(c, type, json = False, attachments=False, data=False, directo
         filepath = f"{directory}{type if (type=='feedback' or type.endswith('s') or attachments) else type + 's'}{'_attachments' if attachments else ''}"
         write_dataset(dataset, filepath, format='csv' if not json else 'json')
         if verbose:
-            print(f"Dataset written to {filepath}")
-        logger.info(f"Dataset written to {filepath}")
+            print(f"Dataset written to {filepath+'.'+'csv' if not json else 'json'}")
+        logger.info(f"Dataset written to {filepath+'.'+'csv' if not json else 'json'}")
 
 def merge_datasets(datasets, json = False, directory=None, verbose=False):
     # remove all datasets that are None
@@ -194,5 +197,124 @@ def merge_datasets(datasets, json = False, directory=None, verbose=False):
     write_dataset(merged_dataset, filepath, format='csv' if not json else 'json')
 
     if verbose:
-        print(f"Merged dataset written to {filepath}")
-    logger.info(f"Merged dataset written to {filepath}")
+        print(f"Merged dataset written to {filepath+'.'+'csv' if not json else 'json'}")
+    logger.info(f"Merged dataset written to {filepath+'.'+'csv' if not json else 'json'}")
+
+
+
+def create_attachments_text_dataset(input_directory=None, output_directory=None, types=None, parallel=1, pdf_library='pdfplumber', json=False, verbose=False):
+
+    if input_directory is None:
+        input_directory = './'
+    elif input_directory == '':
+        input_directory = './'
+    elif not input_directory.endswith('/'):
+        input_directory = input_directory + '/'
+
+    if not types:
+        types = ['publication', 'feedback']
+
+    dataset_type = 'all'
+
+    if 'publication' in types and 'feedback' in types:
+        attachment_path = f'{input_directory}data/attachments'
+    elif 'publication' in types:
+        attachment_path = f'{input_directory}data/attachments/publications'
+        dataset_type = 'publication'
+    elif 'feedback' in types:
+        attachment_path = f'{input_directory}data/attachments/feedback'
+        dataset_type = 'feedback'
+
+    if verbose:
+        print(f"Creating ({dataset_type}) text dataset")
+    logger.info(f"Creating ({dataset_type}) text dataset")
+
+    # check if directory exists
+    if not os.path.exists(f'{input_directory}data/attachments'):
+        if verbose:
+            print(f"Directory {input_directory}data/attachments does not exist")
+        logger.error(f"Directory {input_directory}data/attachments does not exist")
+        raise FileNotFoundError(f"Directory {input_directory}data/attachments does not exist")
+
+    # get all files in directory (recursively)
+    text_files = []
+    for root, dirs, files in os.walk(attachment_path):
+        for file in files:
+            if file.endswith('.txt') or file.endswith('.doc') or file.endswith('.docx') or file.endswith('pdf'):
+                    text_files.append((root, file))
+
+    if verbose:
+        print(f'Found {len(text_files)} text files')
+
+    logger.info(f'Found {len(text_files)} text files')
+
+    # read all text files
+    texts = []
+
+    def extraction_pipeline (path, file):
+
+        filepath = os.path.join(path, file)
+
+        id = path.split('/')[-1]
+        type = path.split('/')[-2]
+
+        # remove 's' from type if it is plural
+        if type.endswith('s'):
+            type = type[:-1]
+
+        text = None
+        error_log_msg = None
+
+        try:
+            text =  extract_text(filepath, pdf_library=pdf_library)
+        except Exception as e:
+            if verbose:
+                print(f'Error reading text from {filepath}: {e}')
+            error_log_msg = f'Error reading text from {filepath}: {e}'
+
+        return (id, type, text, error_log_msg)
+
+    n_jobs = 1
+
+    if parallel > 1:
+        n_jobs = parallel
+
+        if verbose:
+            print(f'Using {n_jobs} parallel jobs')
+        logger.info(f'Using {n_jobs} parallel jobs')
+
+        logger.warning('Error log messages are only written to the log after all items have been processed when using parallel processing.')
+
+    texts = Parallel(n_jobs=n_jobs, verbose=0)(delayed(extraction_pipeline)(path, file) for path, file in tqdm(text_files, desc='Extracting text from files', total=len(text_files)))
+
+    # extract error log messages and log them
+    error_log = [text[3] for text in texts if text[3] is not None]
+    texts = [text[:3] for text in texts if text[3] is None]
+
+    for error in error_log:
+            logger.error(error)
+
+    text_dataset = pd.DataFrame(texts, columns=['id', 'type', 'text'])
+
+    if output_directory is None:
+        output_directory = './'
+    elif output_directory == '':
+        output_directory = './'
+    elif not output_directory.endswith('/'):
+        output_directory = output_directory + '/'
+
+    dataset_filepath = f'{output_directory}{dataset_type + "_" if dataset_type != "all" else ""}attachments_text'
+    if verbose:
+        print(f'Writing text dataset to {dataset_filepath + ".csv" if not json else ".json"}')
+    logger.info(f'Writing text dataset to {dataset_filepath + ".csv" if not json else ".json"}')
+
+    write_dataset(text_dataset, dataset_filepath, format='csv' if not json else 'json')
+
+    if verbose:
+        print(f'Text dataset written to {dataset_filepath + ".csv" if not json else ".json"}')
+    logger.info(f'Text dataset written to {dataset_filepath + ".csv" if not json else ".json"}')
+
+
+
+
+

@@ -19,29 +19,41 @@ def download(args):
 def dataset(args):
     print('Creating datasets')
 
-    # set the directory argument to None (such that the datasets are returned rather than written) if we want to merge the datasets
-    if args.merge:
-        directory_arg = None
-    else:
-        directory_arg = args.directory
+    if args.dataset_type == 'meta':
 
-    datasets = {}
+        # set the directory argument to None (such that the datasets are returned rather than written) if we want to merge the datasets
+        if args.merge:
+            directory_arg = None
+        else:
+            directory_arg = args.directory
 
-    if not args.only or (args.only and 'initiative' in args.only):
-        datasets['initiative'] = ds.create_dataset(args.db, 'initiative', attachments=False, directory=directory_arg, verbose=args.verbose)
+        datasets = {}
 
-    if not args.only or (args.only and 'publication' in args.only):
-        datasets['publication'] = ds.create_dataset(args.db, 'publication', attachments=False, directory=directory_arg, verbose=args.verbose)
-        if args.attachments:
-            datasets['publication_attachment'] = ds.create_dataset(args.db, 'publication', attachments=True, directory=directory_arg, verbose=args.verbose)
+        if not args.only or (args.only and 'initiative' in args.only):
+            datasets['initiative'] = ds.create_dataset(args.db, 'initiative', attachments=False, directory=directory_arg, json=args.json, verbose=args.verbose)
 
-    if not args.only or (args.only and 'feedback' in args.only):
-        datasets['feedback'] = ds.create_dataset(args.db, 'feedback', attachments=False, directory=directory_arg, verbose=args.verbose)
-        if args.attachments:
-            datasets['feedback_attachment'] = ds.create_dataset(args.db, 'feedback', attachments=True, directory=directory_arg, verbose=args.verbose)
+        if not args.only or (args.only and 'publication' in args.only):
+            datasets['publication'] = ds.create_dataset(args.db, 'publication', attachments=False, directory=directory_arg, json=args.json, verbose=args.verbose)
+            if args.attachments:
+                datasets['publication_attachment'] = ds.create_dataset(args.db, 'publication', attachments=True, directory=directory_arg, json=args.json, verbose=args.verbose)
 
-    if args.merge:
-        ds.merge_datasets(datasets, directory=args.directory, verbose=args.verbose)
+        if not args.only or (args.only and 'feedback' in args.only):
+            datasets['feedback'] = ds.create_dataset(args.db, 'feedback', attachments=False, directory=directory_arg, json=args.json, verbose=args.verbose)
+            if args.attachments:
+                datasets['feedback_attachment'] = ds.create_dataset(args.db, 'feedback', attachments=True, directory=directory_arg,  json=args.json, verbose=args.verbose)
+
+        if args.merge:
+            ds.merge_datasets(datasets, directory=args.directory, json=args.json, verbose=args.verbose)
+
+    elif args.dataset_type == 'text':
+
+        if 'publications' in args.only:
+            raise ValueError("'publications' is not a valid value for the --only argument. Use 'publication' instead.")
+
+        if args.only and 'publication' not in args.only and 'feedback' not in args.only:
+            raise ValueError('The text dataset can only be created for publications and feedback (--only).')
+
+        ds.create_attachments_text_dataset(input_directory=args.input_directory, output_directory=args.directory, types=args.only, parallel=args.parallel, json=args.json, pdf_library=args.pdf_library, verbose=args.verbose)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Collect data from the European Commission Have Your Say website and assemble it into a dataset.')
@@ -66,11 +78,16 @@ if __name__ == "__main__":
 
     # create the parser for the "dataset" command
     parser_dataset = subparsers.add_parser('dataset', help='Create datasets from the collected data. By default, this will create distinct (meta-)datasets for initiatives, publications and feedback.')
+    parser_dataset.add_argument(dest='dataset_type', default = 'meta', choices=['meta', 'text'], help='Type of dataset to create. Can be either "meta"data (overview of all initiatives, publication, attachments) or extracted attachment "text". Default is "meta".')
+    parser_dataset.add_argument('-i', '--input-directory', type=str, default='./', help='Input directory for text files (relevant for dataset type "text" only). Defaults to current working directory.')
     parser_dataset.add_argument('-d', '--directory', type=str, default='./', help='Output directory for the dataset. Defaults to current working directory.')
     parser_dataset.add_argument('-a', '--attachments', action='store_true', help='Include attachment datasets. Default is False.')
     parser_dataset.add_argument('-o', '--only', nargs='+', default=None, help='Only create datasets for the specified type(s) of documents. Possible values are "initiative", "publication" or "feedback". Default is None (will create all datasets).')
     parser_dataset.add_argument('-m', '--merge', action='store_true', help='Merge all datasets into a single dataset. Default is False.')
-    parser_dataset.add_argument('--include-data', action='store_true', help='Include the \'data\' (contains raw JSON) column in the dataset. Default is False.')
+    parser_dataset.add_argument('-p', '--parallel', type=int, default=1, help='(text datasets only) Run in parallel with -p <n> jobs. Default is 1 (sequential processing).')
+    parser_dataset.add_argument('--json', action='store_true', help='Output datasets as JSON files. Default is False (csv output).')
+    parser_dataset.add_argument('--include-data', action='store_true', help='Include the \'data\' (contains raw JSON) column in meta dataset. Default is False.')
+    parser_dataset.add_argument('--pdf-library', type=str, default='pdfplumber', choices=['pdfplumber', 'pdfminer.six', 'pymupdf'], help='Library to use for extracting text from PDFs. Default is pdfplumber.')
 
     parser_dataset.set_defaults(func=dataset)
 
