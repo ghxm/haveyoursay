@@ -15,7 +15,9 @@ def collect_initiatives(c, update=False, wait = 0.5, verbose=True):
         print("Getting initiative search results")
     logger.info("Getting initiative search results")
 
-    while True:
+    total_pages = None
+
+    while total_pages is None or page<=total_pages:
         if verbose:
             print("\tPage: " + str(page))
         logger.info(f"Page: {page}")
@@ -50,6 +52,16 @@ def collect_initiatives(c, update=False, wait = 0.5, verbose=True):
                 print(f"Error parsing initiative data: {e}")
             logger.error(f"Error parsing initiative data: {e}")
             break
+            
+        if total_pages is None:
+            try:
+                if 'initiativeResultDtoPage' in data:
+                    total_pages = int(data['initiativeResultDtoPage']['totalPages'])
+            except Exception as e:
+                if verbose:
+                    print(f"Warning: Error getting total pages: {e}. User will need to abort manually.")
+                logger.warning(f"Error getting total pages: {e}")
+                
 
         page += 1
 
@@ -156,8 +168,10 @@ def get_feedback_by_id(id, wait = 0.5, verbose=True):
     if verbose:
         print("Getting feedback for publication " + str(id))
     logger.info(f"Getting feedback for publication {id}")
+    
+    total_pages = None
 
-    while True:
+    while total_pages is None or page<=total_pages:
         if verbose:
             print("\tPage: " + str(page))
         logger.info(f"Page: {page}")
@@ -171,7 +185,7 @@ def get_feedback_by_id(id, wait = 0.5, verbose=True):
                 print("Could not get response for " + str(id) + " (" + str(e) + ")")
             logger.error(f"Could not get response for {id}: {e}")
             break
-
+            
         try:
             data = json.loads(response.read().decode('utf-8'))
         except Exception as e:
@@ -179,6 +193,15 @@ def get_feedback_by_id(id, wait = 0.5, verbose=True):
                 print("Error reading data from " + str(id) + " (" + str(e) + ")")
             logger.error(f"Error reading data from {id}: {e}")
             break
+            
+        if total_pages is None:
+            try:
+                if 'initiativeResultDtoPage' in data:
+                    total_pages = int(data['initiativeResultDtoPage']['totalPages'])
+            except Exception as e:
+                if verbose:
+                    print(f"Warning: Error getting total pages: {e}. User will need to abort manually.")
+                logger.warning(f"Error getting total pages: {e}")
 
         try:
             # API response structure changed - now uses 'content' key
