@@ -55,8 +55,7 @@ def collect_initiatives(c, update=False, wait = 0.5, verbose=True):
             
         if total_pages is None:
             try:
-                if 'initiativeResultDtoPage' in data:
-                    total_pages = int(data['initiativeResultDtoPage']['totalPages'])
+                total_pages = int(data['initiativeResultDtoPage']['totalPages'])
             except Exception as e:
                 if verbose:
                     print(f"Warning: Error getting total pages: {e}. User will need to abort manually.")
