@@ -31,8 +31,24 @@ def collect_initiatives(c, update=False, wait = 0.5, verbose=True):
         data = json.loads(response.read().decode('utf-8'))
 
         try:
-            initiatives += data['_embedded']['initiativeResultDtoes']
-        except:
+            # API response structure changed - now uses 'content' key
+            # Try new structure first, fall back to old structure for compatibility
+            if 'initiativeResultDtoPage' in data and 'content' in data['initiativeResultDtoPage']:
+                initiatives += data['initiativeResultDtoPage']['content']
+            elif 'content' in data:
+                initiatives += data['content']
+            elif '_embedded' in data and 'initiativeResultDtoes' in data['_embedded']:
+                # Old API structure (for backward compatibility)
+                initiatives += data['_embedded']['initiativeResultDtoes']
+            else:
+                if verbose:
+                    print("Warning: Unrecognized API response structure")
+                logger.warning("Unrecognized API response structure")
+                break
+        except Exception as e:
+            if verbose:
+                print(f"Error parsing initiative data: {e}")
+            logger.error(f"Error parsing initiative data: {e}")
             break
 
         page += 1
@@ -165,8 +181,18 @@ def get_feedback_by_id(id, wait = 0.5, verbose=True):
             break
 
         try:
-            feedback += data['_embedded']['feedback']
-        except:
+            # API response structure changed - now uses 'content' key
+            if 'content' in data:
+                feedback += data['content']
+            elif '_embedded' in data and 'feedback' in data['_embedded']:
+                # Old API structure (for backward compatibility)
+                feedback += data['_embedded']['feedback']
+            else:
+                break
+        except Exception as e:
+            if verbose:
+                print(f"Error parsing feedback data: {e}")
+            logger.error(f"Error parsing feedback data: {e}")
             break
 
         page += 1
