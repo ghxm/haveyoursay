@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "haveyoursay"
-authors = [{name = "Maximilian Haag", email = "maximilian.haag@gesis.org"}]
+authors = [{name = "Maximilian Haag", email = "37017654+ghxm@users.noreply.github.com"}]
 readme = "README.md"
 requires-python = ">=3.9"
 version = "0.1.0"
