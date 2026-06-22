@@ -86,4 +86,8 @@ The project is structured as follows:
   - `dataset.py` - the dataset creation module
   - `utils.py` - utility functions
 
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 
