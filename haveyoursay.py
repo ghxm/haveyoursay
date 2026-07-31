@@ -5,16 +5,16 @@ from datetime import datetime
 
 def collect(args):
     print('Collecting data')
-    cl.collect_initiatives(args.db, update=args.update, wait=args.wait, verbose=args.verbose)
-    cl.collect_feedback(args.db, update=args.update, wait=args.wait, verbose=args.verbose)
+    cl.collect_initiatives(args.db, update=args.update, wait=args.wait, verbose=args.verbose, initiative_ids=args.initiative_id)
+    cl.collect_feedback(args.db, update=args.update, wait=args.wait, verbose=args.verbose, initiative_ids=args.initiative_id)
 
 def download(args):
     print('Downloading attachments')
 
     if not args.only or (args.only and 'publication' in args.only):
-        dl.download_publication_attachments(args.db, directory=args.directory, language=args.language, publication_type=args.publication_type, force=args.force, verbose=args.verbose)
+        dl.download_publication_attachments(args.db, directory=args.directory, language=args.language, publication_type=args.publication_type, force=args.force, wait=args.wait, verbose=args.verbose)
     if not args.only or (args.only and 'feedback' in args.only):
-        dl.download_feedback_attachments(args.db, directory=args.directory, language=args.language, publication_type=args.publication_type, force=args.force, verbose=args.verbose)
+        dl.download_feedback_attachments(args.db, directory=args.directory, language=args.language, publication_type=args.publication_type, force=args.force, wait=args.wait, verbose=args.verbose)
 
 def dataset(args):
     print('Creating datasets')
@@ -63,6 +63,7 @@ if __name__ == "__main__":
     parser_collect = subparsers.add_parser('collect', help='Collect metadata from the European Commission Have Your Say website.')
     parser_collect.add_argument('-w', '--wait', type=float, default=0.5, help='Seconds to wait inbetween requests. Default is 0.5 seconds.')
     parser_collect.add_argument('-u', '--update', default=False, action='store_true', help='Only request data not already in the database. Default is False.')
+    parser_collect.add_argument('--initiative-id', type=int, nargs='+', default=None, help='Only collect the specified initiative IDs and their feedback. Default is all initiatives.')
     parser_collect.set_defaults(func=collect)
 
     parser_download = subparsers.add_parser('download', help='Download publication and feedback attachments from the European Commission Have Your Say website.')
