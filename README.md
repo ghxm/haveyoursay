@@ -84,6 +84,9 @@ python haveyoursay.py --db selected.db dataset meta --directory ./selected --att
 > [!WARNING]
 > When using `--merge` together with `--attachments`, the merged dataset contains one row per combination of publication attachment and feedback, since both are joined to the same publication. A publication with 24 attachments and 56 feedback entries produces 1344 rows, and each feedback entry is repeated once per attachment. Feedback is given on publications, not on individual attachments, so these combinations carry no meaning. Do not compute feedback-level statistics on the merged dataset without deduplicating by `feedback_id` first, or use the separate datasets instead.
 
+> [!NOTE]
+> The `totalFeedback` field in the publication metadata counts all contributions received for that publication, while the feedback API only serves contributions published as individual feedback items. The two usually match, but for consultations with mass campaign submissions the difference can be extreme: the [deforestation consultation](https://ec.europa.eu/info/law/better-regulation/have-your-say/initiatives/12137-Deforestation-and-forest-degradation-reducing-the-impact-of-products-placed-on-the-EU-market/public-consultation_en) reports a `totalFeedback` of 1,194,758 in its [initiative metadata](https://ec.europa.eu/info/law/better-regulation/brpapi/groupInitiatives/12137) while the [feedback API](https://ec.europa.eu/info/law/better-regulation/api/allFeedback?publicationId=13469&page=0&size=100) serves about 1,100 individual feedback items for it. A feedback count below `totalFeedback` therefore does not indicate missing data. The field is part of the raw publication JSON, so it appears in the publications dataset only inside the `data` column when using `--include-data`.
+
 
 
 The tool will automatically create the necessary tables in the database if they do not exist and document all runs in a logfile.
