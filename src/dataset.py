@@ -89,7 +89,6 @@ def create_dataset(c, type, json = False, attachments=False, data=False, directo
                 json_extract(data, '$.status') as status,
                 json_extract(data, '$.feedback') as feedback,
                 json_extract(data, '$.dateFeedback') as date_feedback,
-                json_extract(data, '$.status') as status,
                 json_extract(data, '$.publication') as publication,
                 json_extract(data, '$.userType') as user_type,
                 json_extract(data, '$.companySize') as company_size,
