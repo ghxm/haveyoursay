@@ -30,17 +30,17 @@ def dataset(args):
         datasets = {}
 
         if not args.only or (args.only and 'initiative' in args.only):
-            datasets['initiative'] = ds.create_dataset(args.db, 'initiative', attachments=False, directory=directory_arg, json=args.json, verbose=args.verbose)
+            datasets['initiative'] = ds.create_dataset(args.db, 'initiative', attachments=False, data=args.include_data, directory=directory_arg, json=args.json, verbose=args.verbose)
 
         if not args.only or (args.only and 'publication' in args.only):
-            datasets['publication'] = ds.create_dataset(args.db, 'publication', attachments=False, directory=directory_arg, json=args.json, verbose=args.verbose)
+            datasets['publication'] = ds.create_dataset(args.db, 'publication', attachments=False, data=args.include_data, directory=directory_arg, json=args.json, verbose=args.verbose)
             if args.attachments:
-                datasets['publication_attachment'] = ds.create_dataset(args.db, 'publication', attachments=True, directory=directory_arg, json=args.json, verbose=args.verbose)
+                datasets['publication_attachment'] = ds.create_dataset(args.db, 'publication', attachments=True, data=args.include_data, directory=directory_arg, json=args.json, verbose=args.verbose)
 
         if not args.only or (args.only and 'feedback' in args.only):
-            datasets['feedback'] = ds.create_dataset(args.db, 'feedback', attachments=False, directory=directory_arg, json=args.json, verbose=args.verbose)
+            datasets['feedback'] = ds.create_dataset(args.db, 'feedback', attachments=False, data=args.include_data, directory=directory_arg, json=args.json, verbose=args.verbose)
             if args.attachments:
-                datasets['feedback_attachment'] = ds.create_dataset(args.db, 'feedback', attachments=True, directory=directory_arg,  json=args.json, verbose=args.verbose)
+                datasets['feedback_attachment'] = ds.create_dataset(args.db, 'feedback', attachments=True, data=args.include_data, directory=directory_arg,  json=args.json, verbose=args.verbose)
 
         if args.merge:
             ds.merge_datasets(datasets, directory=args.directory, json=args.json, verbose=args.verbose)
