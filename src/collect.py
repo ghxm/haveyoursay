@@ -7,17 +7,24 @@ import logging
 logger = logging.getLogger(__name__)
 
 @db_decorator
-def collect_initiatives(c, update=False, wait = 0.5, verbose=True):
+def collect_initiatives(c, update=False, wait = 0.5, verbose=True, initiative_ids=None):
     page = 0
     initiatives = []
+    initiative_ids = list(dict.fromkeys(initiative_ids or []))
 
-    if verbose:
-        print("Getting initiative search results")
-    logger.info("Getting initiative search results")
+    if initiative_ids:
+        if verbose:
+            print("Using specified initiative IDs")
+        logger.info(f"Using specified initiative IDs: {initiative_ids}")
+        initiatives = [{'id': id} for id in initiative_ids]
+        total_pages = 0
+    else:
+        if verbose:
+            print("Getting initiative search results")
+        logger.info("Getting initiative search results")
+        total_pages = None
 
-    total_pages = None
-
-    while total_pages is None or page<=total_pages:
+    while total_pages is None or page < total_pages:
         if verbose:
             print("\tPage: " + str(page))
         logger.info(f"Page: {page}")
@@ -52,7 +59,7 @@ def collect_initiatives(c, update=False, wait = 0.5, verbose=True):
                 print(f"Error parsing initiative data: {e}")
             logger.error(f"Error parsing initiative data: {e}")
             break
-            
+
         if total_pages is None:
             try:
                 total_pages = int(data['initiativeResultDtoPage']['totalPages'])
@@ -60,7 +67,6 @@ def collect_initiatives(c, update=False, wait = 0.5, verbose=True):
                 if verbose:
                     print(f"Warning: Error getting total pages: {e}. User will need to abort manually.")
                 logger.warning(f"Error getting total pages: {e}")
-                
 
         page += 1
 
@@ -78,7 +84,11 @@ def collect_initiatives(c, update=False, wait = 0.5, verbose=True):
         # write id to db
         c.execute("INSERT OR IGNORE INTO initiatives(id) VALUES(?)", (id,))
 
-    ids = c.execute("SELECT * FROM initiatives").fetchall()
+    if initiative_ids:
+        placeholders = ','.join('?' for _ in initiative_ids)
+        ids = c.execute(f"SELECT * FROM initiatives WHERE id IN ({placeholders})", initiative_ids).fetchall()
+    else:
+        ids = c.execute("SELECT * FROM initiatives").fetchall()
 
     if update:
         # keep only ids without data
@@ -110,34 +120,37 @@ def collect_initiatives(c, update=False, wait = 0.5, verbose=True):
                 continue
 
 @db_decorator
-def collect_feedback(c, update=False, wait = 0.5, verbose=True):
+def collect_feedback(c, update=False, wait = 0.5, verbose=True, initiative_ids=None):
 
     if verbose:
         print("Getting publications...")
     logger.info("Getting publications...")
 
     # get all publication ids from db view
-    publications = c.execute("SELECT * FROM publications_view").fetchall()
+    if initiative_ids:
+        placeholders = ','.join('?' for _ in initiative_ids)
+        publications = c.execute(f"SELECT id FROM publications_view WHERE initiative_id IN ({placeholders})", initiative_ids).fetchall()
+    else:
+        publications = c.execute("SELECT id FROM publications_view").fetchall()
 
     if verbose:
         print("Found " + str(len(publications)) + " publications")
     logger.info(f"Found {len(publications)} publications")
 
     if update:
-
-        feedback = c.execute("SELECT id FROM feedback").fetchall()
-
         # keep only publications without data for feedback
-        publications = [publication for publication in publications if publication[0] not in [fe[0] for fe in feedback]]
+        collected_publication_ids = {row[0] for row in c.execute("SELECT DISTINCT publication_id FROM feedback")}
+        publications = [publication for publication in publications if publication[0] not in collected_publication_ids]
 
     for publication in tqdm(publications, desc="Requesting feedback data and writing to db"):
+        publication_id = publication[0]
 
         try:
-            id_feedback = get_feedback_by_id(id = publication[1], wait=wait, verbose=verbose)
+            id_feedback = get_feedback_by_id(id=publication_id, wait=wait, verbose=verbose)
         except Exception as e:
             if verbose:
-                print("Error getting feedback for publication " + str(publication[1]) + ": " + str(e))
-            logger.error(f"Error getting feedback for publication {publication[1]}: {e}")
+                print("Error getting feedback for publication " + str(publication_id) + ": " + str(e))
+            logger.error(f"Error getting feedback for publication {publication_id}: {e}")
             continue
 
         try:
@@ -147,7 +160,7 @@ def collect_feedback(c, update=False, wait = 0.5, verbose=True):
             # Insert all feedbacks
             for feedback in id_feedback:
                 c.execute("INSERT OR REPLACE INTO feedback (id, publication_id, data) VALUES (?,?,?)",
-                          (feedback['id'], publication[1], json.dumps(feedback)))
+                          (feedback['id'], publication_id, json.dumps(feedback)))
 
             # Commit the transaction
             c.execute("COMMIT")
@@ -155,8 +168,8 @@ def collect_feedback(c, update=False, wait = 0.5, verbose=True):
             # If there's an error, rollback the transaction
             c.execute("ROLLBACK")
             if verbose:
-                print("An error occurred when inserting feedback for publication " + str(publication[1]) + ": " + str(e))
-            logger.error(f"An error occurred when inserting feedback for publication {publication[1]}: {e}")
+                print("An error occurred when inserting feedback for publication " + str(publication_id) + ": " + str(e))
+            logger.error(f"An error occurred when inserting feedback for publication {publication_id}: {e}")
 
 def get_feedback_by_id(id, wait = 0.5, verbose=True):
 
@@ -170,7 +183,7 @@ def get_feedback_by_id(id, wait = 0.5, verbose=True):
     
     total_pages = None
 
-    while total_pages is None or page<=total_pages:
+    while total_pages is None or page < total_pages:
         if verbose:
             print("\tPage: " + str(page))
         logger.info(f"Page: {page}")

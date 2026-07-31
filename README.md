@@ -51,7 +51,7 @@ python haveyoursay.py --help
 
 Replace `<mode>` with one of the following options:  
 
-- `collect`: Collects data from the European Commission Have Your Say website. This should be run first. Use `--update` to only request data not already in the database and `--wait` to specify seconds to wait in between requests.
+- `collect`: Collects data from the European Commission Have Your Say website. This should be run first. Use `--initiative-id` to collect only specific initiatives, `--update` to only request data not already in the database, and `--wait` to specify seconds to wait in between requests.
 - `download`: Downloads publication and feedback attachments from the collected data.
   - Use `--directory` to specify the output directory for the attachments.
   - Use `--only` to specify the type(s) of documents to download (default is both publication and feedback attachments). 
@@ -66,6 +66,12 @@ See this help message for more information:
 
 ```bash
 python haveyoursay.py <mode> --help
+```
+
+```bash
+python haveyoursay.py --db selected.db collect --initiative-id 14626 14691
+python haveyoursay.py --db selected.db download --directory ./selected
+python haveyoursay.py --db selected.db dataset meta --directory ./selected --attachments
 ```
 
 > [!NOTE]
@@ -89,5 +95,4 @@ The project is structured as follows:
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 
