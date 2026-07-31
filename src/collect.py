@@ -55,7 +55,8 @@ def collect_initiatives(c, update=False, wait = 0.5, initiative_ids=None):
             try:
                 total_pages = int(data['initiativeResultDtoPage']['totalPages'])
             except Exception as e:
-                logger.warning(f"Error getting total pages: {e}")
+                logger.error(f"Error getting total pages: {e}")
+                raise
 
         page += 1
 
@@ -158,37 +159,36 @@ def get_feedback_by_publication_id(publication_id, wait = 0.5):
         logger.info(f"Page: {page}")
         url = f'https://ec.europa.eu/info/law/better-regulation/api/allFeedback?publicationId={str(publication_id)}&page={str(page)}&size=100'
 
+        # raise on any failure so that no partial feedback is stored for the publication
         try:
             response = url_open(url)
             time.sleep(wait)
         except Exception as e:
-            logger.error(f"Could not get response for {publication_id}: {e}")
-            break
-            
+            logger.error(f"Could not get response for {publication_id} (page {page}): {e}")
+            raise
+
         try:
             data = json.loads(response.read().decode('utf-8'))
         except Exception as e:
-            logger.error(f"Error reading data from {publication_id}: {e}")
-            break
-            
+            logger.error(f"Error reading data from {publication_id} (page {page}): {e}")
+            raise
+
         if total_pages is None:
             try:
                 total_pages = int(data['totalPages'])
             except Exception as e:
-                logger.warning(f"Error getting total pages: {e}")
+                logger.error(f"Error getting total pages for {publication_id}: {e}")
+                raise
 
-        try:
-            # API response structure changed - now uses 'content' key
-            if 'content' in data:
-                feedback += data['content']
-            elif '_embedded' in data and 'feedback' in data['_embedded']:
-                # Old API structure (for backward compatibility)
-                feedback += data['_embedded']['feedback']
-            else:
-                break
-        except Exception as e:
-            logger.error(f"Error parsing feedback data: {e}")
-            break
+        # API response structure changed - now uses 'content' key
+        if 'content' in data:
+            feedback += data['content']
+        elif '_embedded' in data and 'feedback' in data['_embedded']:
+            # Old API structure (for backward compatibility)
+            feedback += data['_embedded']['feedback']
+        else:
+            logger.error(f"Unrecognized API response structure for {publication_id} (page {page})")
+            raise ValueError(f"Unrecognized API response structure for publication {publication_id} (page {page})")
 
         page += 1
 
