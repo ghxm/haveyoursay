@@ -51,7 +51,9 @@ python haveyoursay.py --help
 
 Replace `<mode>` with one of the following options:  
 
-- `collect`: Collects data from the European Commission Have Your Say website. This should be run first. Use `--initiative-id` to collect only specific initiatives, `--update` to only request data not already in the database, and `--wait` to specify seconds to wait in between requests.
+- `collect`: Collects data from the European Commission Have Your Say website. This should be run first
+  - Use `--initiative-id` to collect only specific initiatives
+  - Use `--update` to only request data not already in the database, and `--wait` to specify seconds to wait in between requests.
 - `download`: Downloads publication and feedback attachments from the collected data.
   - Use `--directory` to specify the output directory for the attachments.
   - Use `--only` to specify the type(s) of documents to download (default is both publication and feedback attachments). 
