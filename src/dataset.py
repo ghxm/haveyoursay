@@ -131,6 +131,10 @@ def merge_datasets(datasets, json = False, directory=None, verbose=False):
         print('Merging datasets')
     logger.info('Merging datasets')
 
+    if 'publication_attachment' in datasets and 'feedback' in datasets:
+        warnings.warn('The merged dataset contains one row per combination of publication attachment and feedback. Deduplicate by feedback_id before computing feedback-level statistics or use the separate datasets instead.')
+        logger.warning('The merged dataset contains one row per combination of publication attachment and feedback. Deduplicate by feedback_id before computing feedback-level statistics or use the separate datasets instead.')
+
     merged_dataset = None
 
     dataset_merging_order = ['initiative', 'publication', 'publication_attachment', 'feedback', 'feedback_attachment']
