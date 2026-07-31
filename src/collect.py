@@ -149,7 +149,7 @@ def collect_feedback(c, update=False, wait = 0.5, verbose=True, initiative_ids=N
         publication_id = publication[0]
 
         try:
-            id_feedback = get_feedback_by_id(id=publication_id, wait=wait, verbose=verbose)
+            id_feedback = get_feedback_by_publication_id(publication_id, wait=wait, verbose=verbose)
         except Exception as e:
             if verbose:
                 print("Error getting feedback for publication " + str(publication_id) + ": " + str(e))
@@ -174,15 +174,15 @@ def collect_feedback(c, update=False, wait = 0.5, verbose=True, initiative_ids=N
                 print("An error occurred when inserting feedback for publication " + str(publication_id) + ": " + str(e))
             logger.error(f"An error occurred when inserting feedback for publication {publication_id}: {e}")
 
-def get_feedback_by_id(id, wait = 0.5, verbose=True):
+def get_feedback_by_publication_id(publication_id, wait = 0.5, verbose=True):
 
     feedback = []
 
     page = 0
 
     if verbose:
-        print("Getting feedback for publication " + str(id))
-    logger.info(f"Getting feedback for publication {id}")
+        print("Getting feedback for publication " + str(publication_id))
+    logger.info(f"Getting feedback for publication {publication_id}")
     
     total_pages = None
 
@@ -190,23 +190,23 @@ def get_feedback_by_id(id, wait = 0.5, verbose=True):
         if verbose:
             print("\tPage: " + str(page))
         logger.info(f"Page: {page}")
-        url = f'https://ec.europa.eu/info/law/better-regulation/api/allFeedback?publicationId={str(id)}&page={str(page)}&size=100'
+        url = f'https://ec.europa.eu/info/law/better-regulation/api/allFeedback?publicationId={str(publication_id)}&page={str(page)}&size=100'
 
         try:
             response = url_open(url)
             time.sleep(wait)
         except Exception as e:
             if verbose:
-                print("Could not get response for " + str(id) + " (" + str(e) + ")")
-            logger.error(f"Could not get response for {id}: {e}")
+                print("Could not get response for " + str(publication_id) + " (" + str(e) + ")")
+            logger.error(f"Could not get response for {publication_id}: {e}")
             break
             
         try:
             data = json.loads(response.read().decode('utf-8'))
         except Exception as e:
             if verbose:
-                print("Error reading data from " + str(id) + " (" + str(e) + ")")
-            logger.error(f"Error reading data from {id}: {e}")
+                print("Error reading data from " + str(publication_id) + " (" + str(e) + ")")
+            logger.error(f"Error reading data from {publication_id}: {e}")
             break
             
         if total_pages is None:
