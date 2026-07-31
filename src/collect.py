@@ -34,8 +34,11 @@ def collect_initiatives(c, update=False, wait = 0.5, verbose=True, initiative_id
         try:
             response = url_open(url)
             time.sleep(wait)
-        except:
-            break
+        except Exception as e:
+            if verbose:
+                print(f"Error getting initiative search results page {page}: {e}")
+            logger.error(f"Error getting initiative search results page {page}: {e}")
+            raise
 
         data = json.loads(response.read().decode('utf-8'))
 
