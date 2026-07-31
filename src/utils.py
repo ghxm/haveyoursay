@@ -245,7 +245,7 @@ def extract_text(path, filetype=None, pdf_library='pdfplumber'):
             elif path.endswith('.docx'):
                 filetype = 'docx'
             else:
-                filetype = get_file_type(path)
+                filetype = get_file_type(file)
 
             if not filetype:
                 # get from path
@@ -259,6 +259,8 @@ def extract_text(path, filetype=None, pdf_library='pdfplumber'):
             return pdf_to_text(file, library=pdf_library)
         elif filetype == 'docx':
             return docx_to_text(file)
+        elif filetype == 'txt':
+            return file.read().decode('utf-8', errors='replace')
         else:
             raise ValueError(f"Filetype {filetype} not supported")
 
