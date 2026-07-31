@@ -81,6 +81,9 @@ python haveyoursay.py --db selected.db dataset meta --directory ./selected --att
 > [!NOTE]
 > Note that the `publications` dataset contains ~ 35 duplicate publications (as of spring 2024). These are not removed from the dataset to preserve the original data as closely as possible. All publications can be uniquely identified by the `id` field in combination with the `initiative_id` field.
 
+> [!WARNING]
+> When using `--merge` together with `--attachments`, the merged dataset contains one row per combination of publication attachment and feedback, since both are joined to the same publication. A publication with 24 attachments and 56 feedback entries produces 1344 rows, and each feedback entry is repeated once per attachment. Feedback is given on publications, not on individual attachments, so these combinations carry no meaning. Do not compute feedback-level statistics on the merged dataset without deduplicating by `feedback_id` first, or use the separate datasets instead.
+
 
 
 The tool will automatically create the necessary tables in the database if they do not exist and document all runs in a logfile.
