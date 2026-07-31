@@ -47,7 +47,7 @@ def dataset(args):
 
     elif args.dataset_type == 'text':
 
-        if 'publications' in args.only:
+        if args.only and 'publications' in args.only:
             raise ValueError("'publications' is not a valid value for the --only argument. Use 'publication' instead.")
 
         if args.only and 'publication' not in args.only and 'feedback' not in args.only:
