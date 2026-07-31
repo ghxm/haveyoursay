@@ -12,7 +12,7 @@ def download(args):
     print('Downloading attachments')
 
     if not args.only or (args.only and 'publication' in args.only):
-        dl.download_publication_attachments(args.db, directory=args.directory, language=args.language, publication_type=args.publication_type, force=args.force, verbose=args.verbose)
+        dl.download_publication_attachments(args.db, directory=args.directory, language=args.language, publication_type=args.publication_type, force=args.force, wait=args.wait, verbose=args.verbose)
     if not args.only or (args.only and 'feedback' in args.only):
         dl.download_feedback_attachments(args.db, directory=args.directory, language=args.language, publication_type=args.publication_type, force=args.force, verbose=args.verbose)
 
