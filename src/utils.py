@@ -118,29 +118,18 @@ def random_sleep(low, high):
     time.sleep(random.randint(low,high))
 
 def fatal_code(e):
-
+    # give up on client errors except 408 (timeout) and 429 (rate limit);
+    # retry server errors (5xx) and network-level errors
     if hasattr(e, 'code'):
-        return 400 <= int(e.code) <= 500 and int(e.code) not in [408, 401, 409, 405]
-    # check if it is a ConnectionResetError
-    elif isinstance(e, ConnectionResetError):
-        return False
-    else:
-        return True
+        return 400 <= int(e.code) < 500 and int(e.code) not in [408, 429]
+    return False
 
-@backoff.on_exception(backoff.expo, (urllib.error.HTTPError, ConnectionResetError), giveup=fatal_code, max_time=60*15)
+@backoff.on_exception(backoff.expo, (urllib.error.URLError, ConnectionResetError, TimeoutError), giveup=fatal_code, max_time=60*15)
 def url_open(url, headers=[]):
     time.sleep(0.01)
     opener = urllib.request.build_opener()
     opener.addheaders = headers
-    try:
-        return opener.open(url)
-    except (urllib.error.URLError, ConnectionResetError) as e:
-        # in case of an internal server error, wait 3 minutes and try again
-        if hasattr(e, 'code') and int(e.code) == 500:
-            time.sleep(3*60)
-            return opener.open(url)
-        else:
-            raise e
+    return opener.open(url)
 
 def download_attachment(url, filename):
 
