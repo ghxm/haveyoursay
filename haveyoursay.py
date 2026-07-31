@@ -5,16 +5,16 @@ from datetime import datetime
 
 def collect(args):
     print('Collecting data')
-    cl.collect_initiatives(args.db, update=args.update, wait=args.wait, verbose=args.verbose, initiative_ids=args.initiative_id)
-    cl.collect_feedback(args.db, update=args.update, wait=args.wait, verbose=args.verbose, initiative_ids=args.initiative_id)
+    cl.collect_initiatives(args.db, update=args.update, wait=args.wait, initiative_ids=args.initiative_id)
+    cl.collect_feedback(args.db, update=args.update, wait=args.wait, initiative_ids=args.initiative_id)
 
 def download(args):
     print('Downloading attachments')
 
     if not args.only or (args.only and 'publication' in args.only):
-        dl.download_publication_attachments(args.db, directory=args.directory, language=args.language, publication_type=args.publication_type, force=args.force, wait=args.wait, verbose=args.verbose)
+        dl.download_publication_attachments(args.db, directory=args.directory, language=args.language, publication_type=args.publication_type, force=args.force, wait=args.wait)
     if not args.only or (args.only and 'feedback' in args.only):
-        dl.download_feedback_attachments(args.db, directory=args.directory, language=args.language, publication_type=args.publication_type, force=args.force, wait=args.wait, verbose=args.verbose)
+        dl.download_feedback_attachments(args.db, directory=args.directory, language=args.language, publication_type=args.publication_type, force=args.force, wait=args.wait)
 
 def dataset(args):
     print('Creating datasets')
@@ -30,27 +30,27 @@ def dataset(args):
         datasets = {}
 
         if not args.only or (args.only and 'initiative' in args.only):
-            datasets['initiative'] = ds.create_dataset(args.db, 'initiative', attachments=False, data=args.include_data, directory=directory_arg, json=args.json, verbose=args.verbose)
+            datasets['initiative'] = ds.create_dataset(args.db, 'initiative', attachments=False, data=args.include_data, directory=directory_arg, json=args.json)
 
         if not args.only or (args.only and 'publication' in args.only):
-            datasets['publication'] = ds.create_dataset(args.db, 'publication', attachments=False, data=args.include_data, directory=directory_arg, json=args.json, verbose=args.verbose)
+            datasets['publication'] = ds.create_dataset(args.db, 'publication', attachments=False, data=args.include_data, directory=directory_arg, json=args.json)
             if args.attachments:
-                datasets['publication_attachment'] = ds.create_dataset(args.db, 'publication', attachments=True, data=args.include_data, directory=directory_arg, json=args.json, verbose=args.verbose)
+                datasets['publication_attachment'] = ds.create_dataset(args.db, 'publication', attachments=True, data=args.include_data, directory=directory_arg, json=args.json)
 
         if not args.only or (args.only and 'feedback' in args.only):
-            datasets['feedback'] = ds.create_dataset(args.db, 'feedback', attachments=False, data=args.include_data, directory=directory_arg, json=args.json, verbose=args.verbose)
+            datasets['feedback'] = ds.create_dataset(args.db, 'feedback', attachments=False, data=args.include_data, directory=directory_arg, json=args.json)
             if args.attachments:
-                datasets['feedback_attachment'] = ds.create_dataset(args.db, 'feedback', attachments=True, data=args.include_data, directory=directory_arg,  json=args.json, verbose=args.verbose)
+                datasets['feedback_attachment'] = ds.create_dataset(args.db, 'feedback', attachments=True, data=args.include_data, directory=directory_arg,  json=args.json)
 
         if args.merge:
-            ds.merge_datasets(datasets, directory=args.directory, json=args.json, verbose=args.verbose)
+            ds.merge_datasets(datasets, directory=args.directory, json=args.json)
 
     elif args.dataset_type == 'text':
 
         if args.only and 'publication' not in args.only and 'feedback' not in args.only:
             raise ValueError('The text dataset can only be created for publications and feedback (--only).')
 
-        ds.create_attachments_text_dataset(input_directory=args.input_directory, output_directory=args.directory, types=args.only, parallel=args.parallel, json=args.json, pdf_library=args.pdf_library, verbose=args.verbose)
+        ds.create_attachments_text_dataset(input_directory=args.input_directory, output_directory=args.directory, types=args.only, parallel=args.parallel, json=args.json, pdf_library=args.pdf_library)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Collect data from the European Commission Have Your Say website and assemble it into a dataset.')
@@ -91,7 +91,7 @@ if __name__ == "__main__":
 
     # common flag for both modes
     parser.add_argument('-d', '--db', type=str, default='haveyoursay.db', help='Path to the SQLite database file.')
-    parser.add_argument('-v', '--verbose', action='store_true', help='Print verbose output. Default is False.')
+    parser.add_argument('-v', '--verbose', action='store_true', help='Show progress information on the console. Warnings and errors are always shown. Default is False.')
 
     args = parser.parse_args()
 
@@ -107,8 +107,12 @@ if __name__ == "__main__":
 
     logger.addHandler(handler)
 
-    if args.verbose:
-        print('Setting up database tables/views...')
+    # console output: progress information with --verbose, warnings and errors always
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO if args.verbose else logging.WARNING)
+    console_handler.setFormatter(logging.Formatter('%(message)s'))
+    logger.addHandler(console_handler)
+
     logger.info('Setting up database tables/views...')
 
     utils.create_tables(args.db)

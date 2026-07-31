@@ -7,10 +7,8 @@ import os
 logger = logging.getLogger(__name__)
 
 @db_decorator
-def download_publication_attachments(c, directory='', language=None, publication_type=None, force=False, wait=0, verbose=True):
+def download_publication_attachments(c, directory='', language=None, publication_type=None, force=False, wait=0):
 
-        if verbose:
-            print("Getting publications attachments...")
         logger.info("Getting publications attachments...")
 
         if directory is not None and len(directory)>0:
@@ -54,8 +52,6 @@ def download_publication_attachments(c, directory='', language=None, publication
 
         publication_attachments = c.execute(sql_query, params).fetchall()
 
-        if verbose:
-            print("Found " + str(len(publication_attachments)) + " publication attachments")
         logger.info(f"Found {len(publication_attachments)} publication attachments")
 
         for publication_attachment in tqdm(publication_attachments, desc="Downloading publication attachments"):
@@ -74,8 +70,6 @@ def download_publication_attachments(c, directory='', language=None, publication
 
             attachment_url = attachment_url.replace(" ", "%20").encode('utf-8').decode('utf-8')
 
-            if verbose:
-                print(f"Downloading attachment from {attachment_url} to {path}")
             logger.info(f"Downloading attachment from {attachment_url} to {path}")
 
             # check if already downloaded
@@ -85,24 +79,16 @@ def download_publication_attachments(c, directory='', language=None, publication
                 try:
                     download_attachment(attachment_url, path)
                     time.sleep(wait)
-                    if verbose:
-                        print(f"Attachment downloaded to {path}")
                     logger.info(f"Attachment downloaded to {path}")
                 except Exception as e:
-                    if verbose:
-                        print("Error downloading attachment from {}: {}".format(attachment_url, str(e)))
                     logger.error(f"Error downloading attachment from {attachment_url}: {e}")
             else:
-                if verbose:
-                    print(f"Attachment already exists in {path}")
                 logger.info(f"Attachment already exists in {path}")
 
 
 @db_decorator
-def download_feedback_attachments(c, directory='', language=None, publication_type=None, force=False, wait=0, verbose=True):
+def download_feedback_attachments(c, directory='', language=None, publication_type=None, force=False, wait=0):
 
-        if verbose:
-            print("Getting feedback attachments...")
         logger.info("Getting feedback attachments...")
 
         if directory is not None and len(directory)>0:
@@ -145,8 +131,6 @@ def download_feedback_attachments(c, directory='', language=None, publication_ty
 
         feedback_attachments = c.execute(sql_query, params).fetchall()
 
-        if verbose:
-            print("Found " + str(len(feedback_attachments)) + " feedback attachments")
         logger.info(f"Found {len(feedback_attachments)} feedback attachments")
 
         for feedback_attachment in tqdm(feedback_attachments, desc="Downloading feedback attachments"):
@@ -163,8 +147,6 @@ def download_feedback_attachments(c, directory='', language=None, publication_ty
 
             attachment_url = attachment_url.replace(" ", "%20").encode('utf-8').decode('utf-8')
 
-            if verbose:
-                print(f"Downloading attachment from {attachment_url} to {path}")
             logger.info(f"Downloading attachment from {attachment_url} to {path}")
 
             # check if already downloaded
@@ -174,14 +156,8 @@ def download_feedback_attachments(c, directory='', language=None, publication_ty
                 try:
                     download_attachment(attachment_url, path)
                     time.sleep(wait)
-                    if verbose:
-                        print(f"Attachment downloaded to {path}")
                     logger.info(f"Attachment downloaded to {path}")
                 except Exception as e:
-                    if verbose:
-                        print("Error downloading attachment from {}: {}".format(attachment_url, str(e)))
                     logger.error(f"Error downloading attachment from {attachment_url}: {e}")
             else:
-                if verbose:
-                    print(f"Attachment already exists in {path}")
                 logger.info(f"Attachment already exists in {path}")

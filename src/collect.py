@@ -7,26 +7,20 @@ import logging
 logger = logging.getLogger(__name__)
 
 @db_decorator
-def collect_initiatives(c, update=False, wait = 0.5, verbose=True, initiative_ids=None):
+def collect_initiatives(c, update=False, wait = 0.5, initiative_ids=None):
     page = 0
     initiatives = []
     initiative_ids = list(dict.fromkeys(initiative_ids or []))
 
     if initiative_ids:
-        if verbose:
-            print("Using specified initiative IDs")
         logger.info(f"Using specified initiative IDs: {initiative_ids}")
         initiatives = [{'id': id} for id in initiative_ids]
         total_pages = 0
     else:
-        if verbose:
-            print("Getting initiative search results")
         logger.info("Getting initiative search results")
         total_pages = None
 
     while total_pages is None or page < total_pages:
-        if verbose:
-            print("\tPage: " + str(page))
         logger.info(f"Page: {page}")
 
         url = f'https://ec.europa.eu/info/law/better-regulation/brpapi/searchInitiatives?page={str(page)}&size=100&language=EN'
@@ -35,8 +29,6 @@ def collect_initiatives(c, update=False, wait = 0.5, verbose=True, initiative_id
             response = url_open(url)
             time.sleep(wait)
         except Exception as e:
-            if verbose:
-                print(f"Error getting initiative search results page {page}: {e}")
             logger.error(f"Error getting initiative search results page {page}: {e}")
             raise
 
@@ -53,13 +45,9 @@ def collect_initiatives(c, update=False, wait = 0.5, verbose=True, initiative_id
                 # Old API structure (for backward compatibility)
                 initiatives += data['_embedded']['initiativeResultDtoes']
             else:
-                if verbose:
-                    print("Warning: Unrecognized API response structure")
                 logger.warning("Unrecognized API response structure")
                 break
         except Exception as e:
-            if verbose:
-                print(f"Error parsing initiative data: {e}")
             logger.error(f"Error parsing initiative data: {e}")
             break
 
@@ -67,18 +55,12 @@ def collect_initiatives(c, update=False, wait = 0.5, verbose=True, initiative_id
             try:
                 total_pages = int(data['initiativeResultDtoPage']['totalPages'])
             except Exception as e:
-                if verbose:
-                    print(f"Warning: Error getting total pages: {e}. User will need to abort manually.")
                 logger.warning(f"Error getting total pages: {e}")
 
         page += 1
 
-    if verbose:
-        print("Got " + str(len(initiatives)) + " initiatives")
     logger.info(f"Got {len(initiatives)} initiatives")
 
-    if verbose:
-        print("Writing initiative IDs to db")
     logger.info("Writing initiative IDs to db")
 
     for initiative in initiatives:
@@ -106,8 +88,6 @@ def collect_initiatives(c, update=False, wait = 0.5, verbose=True, initiative_id
             response = url_open(url)
             time.sleep(wait)
         except Exception as e:
-            if verbose:
-                print("\tError getting initiative " + str(id) + ": " + str(e))
             logger.error(f"Error getting initiative {id}: {e}")
             continue
 
@@ -117,16 +97,12 @@ def collect_initiatives(c, update=False, wait = 0.5, verbose=True, initiative_id
             try:
                 c.execute("UPDATE initiatives SET data = ?, timestamp=datetime('now') WHERE id = ?", (json.dumps(data), id))
             except Exception as e:
-                if verbose:
-                    print("\tError writing initiative " + str(id) + " to db: " + str(e))
                 logger.error(f"Error writing initiative {id} to db: {e}")
                 continue
 
 @db_decorator
-def collect_feedback(c, update=False, wait = 0.5, verbose=True, initiative_ids=None):
+def collect_feedback(c, update=False, wait = 0.5, initiative_ids=None):
 
-    if verbose:
-        print("Getting publications...")
     logger.info("Getting publications...")
 
     # get all publication ids from db view
@@ -136,8 +112,6 @@ def collect_feedback(c, update=False, wait = 0.5, verbose=True, initiative_ids=N
     else:
         publications = c.execute("SELECT id FROM publications_view").fetchall()
 
-    if verbose:
-        print("Found " + str(len(publications)) + " publications")
     logger.info(f"Found {len(publications)} publications")
 
     if update:
@@ -149,10 +123,8 @@ def collect_feedback(c, update=False, wait = 0.5, verbose=True, initiative_ids=N
         publication_id = publication[0]
 
         try:
-            id_feedback = get_feedback_by_publication_id(publication_id, wait=wait, verbose=verbose)
+            id_feedback = get_feedback_by_publication_id(publication_id, wait=wait)
         except Exception as e:
-            if verbose:
-                print("Error getting feedback for publication " + str(publication_id) + ": " + str(e))
             logger.error(f"Error getting feedback for publication {publication_id}: {e}")
             continue
 
@@ -170,25 +142,19 @@ def collect_feedback(c, update=False, wait = 0.5, verbose=True, initiative_ids=N
         except Exception as e:
             # If there's an error, rollback the transaction
             c.execute("ROLLBACK")
-            if verbose:
-                print("An error occurred when inserting feedback for publication " + str(publication_id) + ": " + str(e))
             logger.error(f"An error occurred when inserting feedback for publication {publication_id}: {e}")
 
-def get_feedback_by_publication_id(publication_id, wait = 0.5, verbose=True):
+def get_feedback_by_publication_id(publication_id, wait = 0.5):
 
     feedback = []
 
     page = 0
 
-    if verbose:
-        print("Getting feedback for publication " + str(publication_id))
     logger.info(f"Getting feedback for publication {publication_id}")
     
     total_pages = None
 
     while total_pages is None or page < total_pages:
-        if verbose:
-            print("\tPage: " + str(page))
         logger.info(f"Page: {page}")
         url = f'https://ec.europa.eu/info/law/better-regulation/api/allFeedback?publicationId={str(publication_id)}&page={str(page)}&size=100'
 
@@ -196,16 +162,12 @@ def get_feedback_by_publication_id(publication_id, wait = 0.5, verbose=True):
             response = url_open(url)
             time.sleep(wait)
         except Exception as e:
-            if verbose:
-                print("Could not get response for " + str(publication_id) + " (" + str(e) + ")")
             logger.error(f"Could not get response for {publication_id}: {e}")
             break
             
         try:
             data = json.loads(response.read().decode('utf-8'))
         except Exception as e:
-            if verbose:
-                print("Error reading data from " + str(publication_id) + " (" + str(e) + ")")
             logger.error(f"Error reading data from {publication_id}: {e}")
             break
             
@@ -213,8 +175,6 @@ def get_feedback_by_publication_id(publication_id, wait = 0.5, verbose=True):
             try:
                 total_pages = int(data['totalPages'])
             except Exception as e:
-                if verbose:
-                    print(f"Warning: Error getting total pages: {e}. User will need to abort manually.")
                 logger.warning(f"Error getting total pages: {e}")
 
         try:
@@ -227,15 +187,11 @@ def get_feedback_by_publication_id(publication_id, wait = 0.5, verbose=True):
             else:
                 break
         except Exception as e:
-            if verbose:
-                print(f"Error parsing feedback data: {e}")
             logger.error(f"Error parsing feedback data: {e}")
             break
 
         page += 1
 
-    if verbose:
-        print("Got " + str(len(feedback)) + " feedbacks")
     logger.info(f"Got {len(feedback)} feedbacks")
 
     return feedback

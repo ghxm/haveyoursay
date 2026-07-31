@@ -2,7 +2,6 @@ from src.utils import db_decorator, extract_text
 import pandas as pd
 from tqdm import tqdm
 import logging
-import warnings
 import csv
 import os
 from joblib import Parallel, delayed
@@ -24,10 +23,8 @@ def write_dataset(df, filepath, format='csv', index=False, quoting=csv.QUOTE_NON
         raise ValueError(f'Invalid format: {format}')
 
 @db_decorator
-def create_dataset(c, type, json = False, attachments=False, data=False, directory=None, verbose=False):
+def create_dataset(c, type, json = False, attachments=False, data=False, directory=None):
 
-    if verbose:
-        print(f"Creating {type}{' attachements' if attachments else ''} dataset")
     logger.info(f"Creating {type}{' attachements' if attachments else ''} dataset")
 
     con = c.connection
@@ -35,8 +32,6 @@ def create_dataset(c, type, json = False, attachments=False, data=False, directo
 
     if type == 'initiative':
         if attachments:
-            if verbose:
-                print('Initiatives do not have attachments')
             logger.error('Initiatives do not have attachments')
 
         dataset = pd.read_sql("""
@@ -113,26 +108,19 @@ def create_dataset(c, type, json = False, attachments=False, data=False, directo
         elif not directory.endswith('/'):
             directory = directory + '/'
 
-        if verbose:
-            print(f"Writing {type} {'attachments' if attachments else ''} dataset to {directory}")
         logger.info(f"Writing {type} {'attachments' if attachments else ''} dataset to {directory}")
 
         filepath = f"{directory}{type if (type=='feedback' or type.endswith('s') or attachments) else type + 's'}{'_attachments' if attachments else ''}"
         write_dataset(dataset, filepath, format='csv' if not json else 'json')
-        if verbose:
-            print(f"Dataset written to {filepath+'.'+'csv' if not json else 'json'}")
         logger.info(f"Dataset written to {filepath+'.'+'csv' if not json else 'json'}")
 
-def merge_datasets(datasets, json = False, directory=None, verbose=False):
+def merge_datasets(datasets, json = False, directory=None):
     # remove all datasets that are None
     datasets = {key: dataset for key, dataset in datasets.items() if dataset is not None}
 
-    if verbose:
-        print('Merging datasets')
     logger.info('Merging datasets')
 
     if 'publication_attachment' in datasets and 'feedback' in datasets:
-        warnings.warn('The merged dataset contains one row per combination of publication attachment and feedback. Deduplicate by feedback_id before computing feedback-level statistics or use the separate datasets instead.')
         logger.warning('The merged dataset contains one row per combination of publication attachment and feedback. Deduplicate by feedback_id before computing feedback-level statistics or use the separate datasets instead.')
 
     merged_dataset = None
@@ -158,35 +146,23 @@ def merge_datasets(datasets, json = False, directory=None, verbose=False):
         else:
             if key == 'publication':
                 # publications can only be merged to initiatives
-                if verbose:
-                    print('Merging publications to initiatives')
                 logger.info('Merging publications to initiatives')
                 merged_dataset = merged_dataset.merge(dataset, on='initiative_id', how='left', suffixes=('', '_publication'))
             elif key == 'publication_attachment':
-                if verbose:
-                    print('Merging publication attachments to publications')
                 logger.info('Merging publication attachments to publications')
                 # publication attachments can only be merged to publications
                 merged_dataset = merged_dataset.merge(dataset, on='publication_id', how='left', suffixes=('', '_publication_attachment'))
             elif key == 'feedback':
-                if verbose:
-                    print('Merging feedback to publications')
                 logger.info('Merging feedback to publications')
                 # feedback can only be merged to publications
                 merged_dataset = merged_dataset.merge(dataset, on='publication_id', how='left', suffixes=('', '_feedback'))
             elif key == 'feedback_attachment':
-                if verbose:
-                    print('Merging feedback attachments to feedback')
                 logger.info('Merging feedback attachments to feedback')
                 # feedback attachments can only be merged to feedback
                 merged_dataset = merged_dataset.merge(dataset, on='feedback_id', how='left', suffixes=('', '_feedback_attachment'))
             else:
-                if verbose:
-                    warnings.warn(f"Dataset {key} cannot be merged.")
                 logger.error(f"Dataset {key} cannot be merged.")
 
-    if verbose:
-        print('Writing merged dataset to disk')
     logger.info('Writing merged dataset to disk')
 
     if directory is None:
@@ -199,13 +175,11 @@ def merge_datasets(datasets, json = False, directory=None, verbose=False):
     filepath = f"{directory}haveyoursay"
     write_dataset(merged_dataset, filepath, format='csv' if not json else 'json')
 
-    if verbose:
-        print(f"Merged dataset written to {filepath+'.'+'csv' if not json else 'json'}")
     logger.info(f"Merged dataset written to {filepath+'.'+'csv' if not json else 'json'}")
 
 
 
-def create_attachments_text_dataset(input_directory=None, output_directory=None, types=None, parallel=1, pdf_library='pdfplumber', json=False, verbose=False):
+def create_attachments_text_dataset(input_directory=None, output_directory=None, types=None, parallel=1, pdf_library='pdfplumber', json=False):
 
     if input_directory is None:
         input_directory = './'
@@ -228,14 +202,10 @@ def create_attachments_text_dataset(input_directory=None, output_directory=None,
         attachment_path = f'{input_directory}data/attachments/feedback'
         dataset_type = 'feedback'
 
-    if verbose:
-        print(f"Creating ({dataset_type}) text dataset")
     logger.info(f"Creating ({dataset_type}) text dataset")
 
     # check if directory exists
     if not os.path.exists(f'{input_directory}data/attachments'):
-        if verbose:
-            print(f"Directory {input_directory}data/attachments does not exist")
         logger.error(f"Directory {input_directory}data/attachments does not exist")
         raise FileNotFoundError(f"Directory {input_directory}data/attachments does not exist")
 
@@ -246,8 +216,6 @@ def create_attachments_text_dataset(input_directory=None, output_directory=None,
             if file.endswith('.txt') or file.endswith('.doc') or file.endswith('.docx') or file.endswith('pdf'):
                     text_files.append((root, file))
 
-    if verbose:
-        print(f'Found {len(text_files)} text files')
 
     logger.info(f'Found {len(text_files)} text files')
 
@@ -271,8 +239,6 @@ def create_attachments_text_dataset(input_directory=None, output_directory=None,
         try:
             text =  extract_text(filepath, pdf_library=pdf_library)
         except Exception as e:
-            if verbose:
-                print(f'Error reading text from {filepath}: {e}')
             error_log_msg = f'Error reading text from {filepath}: {e}'
 
         return (id, type, text, error_log_msg)
@@ -282,8 +248,6 @@ def create_attachments_text_dataset(input_directory=None, output_directory=None,
     if parallel > 1:
         n_jobs = parallel
 
-        if verbose:
-            print(f'Using {n_jobs} parallel jobs')
         logger.info(f'Using {n_jobs} parallel jobs')
 
         logger.warning('Error log messages are only written to the log after all items have been processed when using parallel processing.')
@@ -307,14 +271,10 @@ def create_attachments_text_dataset(input_directory=None, output_directory=None,
         output_directory = output_directory + '/'
 
     dataset_filepath = f'{output_directory}{dataset_type + "_" if dataset_type != "all" else ""}attachments_text'
-    if verbose:
-        print(f'Writing text dataset to {dataset_filepath + ".csv" if not json else ".json"}')
     logger.info(f'Writing text dataset to {dataset_filepath + ".csv" if not json else ".json"}')
 
     write_dataset(text_dataset, dataset_filepath, format='csv' if not json else 'json')
 
-    if verbose:
-        print(f'Text dataset written to {dataset_filepath + ".csv" if not json else ".json"}')
     logger.info(f'Text dataset written to {dataset_filepath + ".csv" if not json else ".json"}')
 
 
