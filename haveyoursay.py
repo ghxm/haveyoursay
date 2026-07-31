@@ -47,9 +47,6 @@ def dataset(args):
 
     elif args.dataset_type == 'text':
 
-        if args.only and 'publications' in args.only:
-            raise ValueError("'publications' is not a valid value for the --only argument. Use 'publication' instead.")
-
         if args.only and 'publication' not in args.only and 'feedback' not in args.only:
             raise ValueError('The text dataset can only be created for publications and feedback (--only).')
 
@@ -69,7 +66,7 @@ if __name__ == "__main__":
     parser_download = subparsers.add_parser('download', help='Download publication and feedback attachments from the European Commission Have Your Say website.')
     parser_download.add_argument('-d', '--directory', type=str, default='./', help='Directory to save attachments to. Defaults to current working directory.')
     parser_download.add_argument('-w', '--wait', type=float, default=0, help='Seconds to wait inbetween requests. Default is 0 seconds.')
-    parser_download.add_argument('-o', '--only', nargs='+', default=None, help='Only download attachments for the specified type(s) of documents. Possible values are "publication" (attachments) or "feedback" (attachments). Default is None (will download all attachments).')
+    parser_download.add_argument('-o', '--only', nargs='+', default=None, choices=['publication', 'feedback'], help='Only download attachments for the specified type(s) of documents. Possible values are "publication" (attachments) or "feedback" (attachments). Default is None (will download all attachments).')
     parser_download.add_argument('-f', '--force', action="store_true", help='Force download of all attachments, even if they already exist. By default, only non-existing files will be downloaded.')
     parser_download.add_argument('--publication-type', nargs='+', default=None,
                                  help='Filter publications by type before downloading. SQL wildcards can be used. Default is None.')
@@ -83,7 +80,7 @@ if __name__ == "__main__":
     parser_dataset.add_argument('-i', '--input-directory', type=str, default='./', help='Input directory for text files (relevant for dataset type "text" only). Defaults to current working directory.')
     parser_dataset.add_argument('-d', '--directory', type=str, default='./', help='Output directory for the dataset. Defaults to current working directory.')
     parser_dataset.add_argument('-a', '--attachments', action='store_true', help='Include attachment datasets. Default is False.')
-    parser_dataset.add_argument('-o', '--only', nargs='+', default=None, help='Only create datasets for the specified type(s) of documents. Possible values are "initiative", "publication" or "feedback". Default is None (will create all datasets).')
+    parser_dataset.add_argument('-o', '--only', nargs='+', default=None, choices=['initiative', 'publication', 'feedback'], help='Only create datasets for the specified type(s) of documents. Possible values are "initiative", "publication" or "feedback". Default is None (will create all datasets).')
     parser_dataset.add_argument('-m', '--merge', action='store_true', help='Merge all datasets into a single dataset. Default is False.')
     parser_dataset.add_argument('-p', '--parallel', type=int, default=1, help='(text datasets only) Run in parallel with -p <n> jobs. Default is 1 (sequential processing).')
     parser_dataset.add_argument('--json', action='store_true', help='Output datasets as JSON files. Default is False (csv output).')
