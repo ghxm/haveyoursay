@@ -68,6 +68,8 @@ See this help message for more information:
 python haveyoursay.py <mode> --help
 ```
 
+For example, to collect, download, and create datasets for selected initiatives only:
+
 ```bash
 python haveyoursay.py --db selected.db collect --initiative-id 14626 14691
 python haveyoursay.py --db selected.db download --directory ./selected
