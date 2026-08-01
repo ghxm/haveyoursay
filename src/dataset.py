@@ -53,7 +53,8 @@ def create_dataset(c, type, json = False, attachments=False, data=False, directo
                 json_extract(data, '$.stage') as stage,
                 json_extract(data, '$.isMajor') as is_major,
                 json_extract(data, '$.isEvaluation') as is_evaluation,
-                json_extract(data, '$.isGroupedCfe') as is_grouped_cfe
+                json_extract(data, '$.isGroupedCfe') as is_grouped_cfe,
+                data
             FROM initiatives
             """, con)
 
@@ -87,7 +88,8 @@ def create_dataset(c, type, json = False, attachments=False, data=False, directo
                 json_extract(data, '$.publication') as publication,
                 json_extract(data, '$.userType') as user_type,
                 json_extract(data, '$.companySize') as company_size,
-                json_extract(data, '$.referenceInitiative') as reference_initiative
+                json_extract(data, '$.referenceInitiative') as reference_initiative,
+                data
             FROM feedback
             """, con)
 
