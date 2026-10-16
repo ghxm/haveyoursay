@@ -1,10 +1,11 @@
 *.json
+!tests/fixtures/*.json
 *.csv
+!docs/codebook.csv
 *.log
 *.db
 *.zip
 
-src/haveyour*
 
 venv
 

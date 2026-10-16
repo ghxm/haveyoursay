@@ -1,126 +1,23 @@
-import argparse
-from src import utils, collect as cl, download as dl, dataset as ds
-import logging
-from datetime import datetime
+"""Compatibility entry point: `python haveyoursay.py ...` from a source checkout.
 
-def collect(args):
-    print('Collecting data')
-    cl.collect_initiatives(args.db, update=args.update, wait=args.wait, initiative_ids=args.initiative_id)
-    cl.collect_feedback(args.db, update=args.update, wait=args.wait, initiative_ids=args.initiative_id)
+The installed `haveyoursay` command (pip install .) is the preferred way to
+run the tool. This file adds src/ to the path and calls the same CLI. When
+Python imports this file instead of the package (because the repository root
+is on sys.path), it hands over to the real package so that
+`import haveyoursay` still yields the package.
+"""
 
-def download(args):
-    print('Downloading attachments')
+import importlib
+import sys
+from pathlib import Path
 
-    if not args.only or (args.only and 'publication' in args.only):
-        dl.download_publication_attachments(args.db, directory=args.directory, language=args.language, publication_type=args.publication_type, force=args.force, wait=args.wait)
-    if not args.only or (args.only and 'feedback' in args.only):
-        dl.download_feedback_attachments(args.db, directory=args.directory, language=args.language, publication_type=args.publication_type, force=args.force, wait=args.wait)
-
-def dataset(args):
-    print('Creating datasets')
-
-    if args.dataset_type == 'meta':
-
-        # set the directory argument to None (such that the datasets are returned rather than written) if we want to merge the datasets
-        if args.merge:
-            directory_arg = None
-        else:
-            directory_arg = args.directory
-
-        datasets = {}
-
-        if not args.only or (args.only and 'initiative' in args.only):
-            datasets['initiative'] = ds.create_dataset(args.db, 'initiative', attachments=False, data=args.include_data, directory=directory_arg, json=args.json)
-
-        if not args.only or (args.only and 'publication' in args.only):
-            datasets['publication'] = ds.create_dataset(args.db, 'publication', attachments=False, data=args.include_data, directory=directory_arg, json=args.json)
-            if args.attachments:
-                datasets['publication_attachment'] = ds.create_dataset(args.db, 'publication', attachments=True, data=args.include_data, directory=directory_arg, json=args.json)
-
-        if not args.only or (args.only and 'feedback' in args.only):
-            datasets['feedback'] = ds.create_dataset(args.db, 'feedback', attachments=False, data=args.include_data, directory=directory_arg, json=args.json)
-            if args.attachments:
-                datasets['feedback_attachment'] = ds.create_dataset(args.db, 'feedback', attachments=True, data=args.include_data, directory=directory_arg,  json=args.json)
-
-        if args.merge:
-            ds.merge_datasets(datasets, directory=args.directory, json=args.json)
-
-    elif args.dataset_type == 'text':
-
-        if args.only and 'publication' not in args.only and 'feedback' not in args.only:
-            raise ValueError('The text dataset can only be created for publications and feedback (--only).')
-
-        ds.create_attachments_text_dataset(input_directory=args.input_directory, output_directory=args.directory, types=args.only, parallel=args.parallel, json=args.json, pdf_library=args.pdf_library)
+_SRC = str(Path(__file__).resolve().parent / "src")
+sys.path[:] = [_SRC] + [p for p in sys.path if p != _SRC]
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Collect data from the European Commission Have Your Say website and assemble it into a dataset.')
-    subparsers = parser.add_subparsers(dest='mode', required=True, help='Mode to run the script in. Can be either "collect" (data), "download" (attachments) or (create) "dataset".')
+    from haveyoursay.cli import main
 
-    # create the parser for the "collect" command
-    parser_collect = subparsers.add_parser('collect', help='Collect metadata from the European Commission Have Your Say website.')
-    parser_collect.add_argument('-w', '--wait', type=float, default=0.5, help='Seconds to wait inbetween requests. Default is 0.5 seconds.')
-    parser_collect.add_argument('-u', '--update', default=False, action='store_true', help='Only request data not already in the database. Default is False.')
-    parser_collect.add_argument('--initiative-id', type=int, nargs='+', default=None, help='Only collect the specified initiative IDs and their feedback. Default is all initiatives.')
-    parser_collect.set_defaults(func=collect)
-
-    parser_download = subparsers.add_parser('download', help='Download publication and feedback attachments from the European Commission Have Your Say website.')
-    parser_download.add_argument('-d', '--directory', type=str, default='./', help='Directory to save attachments to. Defaults to current working directory.')
-    parser_download.add_argument('-w', '--wait', type=float, default=0, help='Seconds to wait inbetween requests. Default is 0 seconds.')
-    parser_download.add_argument('-o', '--only', nargs='+', default=None, choices=['publication', 'feedback'], help='Only download attachments for the specified type(s) of documents. Possible values are "publication" (attachments) or "feedback" (attachments). Default is None (will download all attachments).')
-    parser_download.add_argument('-f', '--force', action="store_true", help='Force download of all attachments, even if they already exist. By default, only non-existing files will be downloaded.')
-    parser_download.add_argument('--publication-type', nargs='+', default=None,
-                                 help='Filter publications by type before downloading. SQL wildcards can be used. Default is None.')
-    parser_download.add_argument('--language', nargs='+', default=None,
-                                    help='Filter attachments by language before downloading. Default is None.')
-    parser_download.set_defaults(func=download)
-
-    # create the parser for the "dataset" command
-    parser_dataset = subparsers.add_parser('dataset', help='Create datasets from the collected data. By default, this will create distinct (meta-)datasets for initiatives, publications and feedback.')
-    parser_dataset.add_argument(dest='dataset_type', default = 'meta', choices=['meta', 'text'], help='Type of dataset to create. Can be either "meta"data (overview of all initiatives, publication, attachments) or extracted attachment "text". Default is "meta".')
-    parser_dataset.add_argument('-i', '--input-directory', type=str, default='./', help='Input directory for text files (relevant for dataset type "text" only). Defaults to current working directory.')
-    parser_dataset.add_argument('-d', '--directory', type=str, default='./', help='Output directory for the dataset. Defaults to current working directory.')
-    parser_dataset.add_argument('-a', '--attachments', action='store_true', help='Include attachment datasets. Default is False.')
-    parser_dataset.add_argument('-o', '--only', nargs='+', default=None, choices=['initiative', 'publication', 'feedback'], help='Only create datasets for the specified type(s) of documents. Possible values are "initiative", "publication" or "feedback". Default is None (will create all datasets).')
-    parser_dataset.add_argument('-m', '--merge', action='store_true', help='Merge all datasets into a single dataset. Default is False.')
-    parser_dataset.add_argument('-p', '--parallel', type=int, default=1, help='(text datasets only) Run in parallel with -p <n> jobs. Default is 1 (sequential processing).')
-    parser_dataset.add_argument('--json', action='store_true', help='Output datasets as JSON files. Default is False (csv output).')
-    parser_dataset.add_argument('--include-data', action='store_true', help='Include the \'data\' (contains raw JSON) column in meta dataset. Default is False.')
-    parser_dataset.add_argument('--pdf-library', type=str, default='pdfplumber', choices=['pdfplumber', 'pdfminer.six', 'pymupdf'], help='Library to use for extracting text from PDFs. Default is pdfplumber.')
-
-    parser_dataset.set_defaults(func=dataset)
-
-    # common flag for both modes
-    parser.add_argument('-d', '--db', type=str, default='haveyoursay.db', help='Path to the SQLite database file.')
-    parser.add_argument('-v', '--verbose', action='store_true', help='Show progress information on the console. Warnings and errors are always shown. Default is False.')
-
-    args = parser.parse_args()
-
-    # set up logger
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-
-    handler = logging.FileHandler(f'haveyoursay_{args.mode}_{datetime.now().strftime("%Y%m%d%H%M")}.log')
-    handler.setLevel(logging.INFO)
-
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-
-    logger.addHandler(handler)
-
-    # console output: progress information with --verbose, warnings and errors always
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO if args.verbose else logging.WARNING)
-    console_handler.setFormatter(logging.Formatter('%(message)s'))
-    logger.addHandler(console_handler)
-
-    logger.info('Setting up database tables/views...')
-
-    utils.create_tables(args.db)
-
-    logger.info(f'Arguments: {args}')
-
-    if args.mode in ['collect', 'download', 'dataset']:
-        args.func(args)
-    else:
-        # print help and exit
-        parser.print_help()
+    sys.exit(main())
+else:
+    del sys.modules[__name__]
+    sys.modules[__name__] = importlib.import_module("haveyoursay")
