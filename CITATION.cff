@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "haveyoursay: Collecting data from the European Commission's Have Your Say portal"
+authors:
+  - family-names: Haag
+    given-names: Maximilian
+    affiliation: "GESIS - Leibniz Institute for the Social Sciences"
+version: 0.9.0
+date-released: "2026-10-16"
+repository-code: "https://github.com/ghxm/haveyoursay"
+license: MIT
+keywords:
+  - European Commission
+  - public consultation
+  - Have Your Say
+  - data collection

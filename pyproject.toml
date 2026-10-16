@@ -4,13 +4,44 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "haveyoursay"
+description = "Collect data from the European Commission's Have Your Say consultation portal and build research datasets from it"
 authors = [{name = "Maximilian Haag", email = "37017654+ghxm@users.noreply.github.com"}]
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.9"
-version = "0.1.0"
-dynamic = ["dependencies"]
+dynamic = ["version"]
+dependencies = [
+    "backoff>=2.2",
+    "tqdm>=4.66",
+    "pandas>=2.2,<4",
+    "pdfplumber>=0.11",
+    "joblib>=1.4",
+    "python-docx>=1.2",
+]
+keywords = ["European Commission", "public consultation", "Have Your Say", "data collection"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+]
+
+[project.optional-dependencies]
+pdf = ["pdfminer.six", "pymupdf"]
+dev = ["pytest>=8"]
+
+[project.urls]
+Repository = "https://github.com/ghxm/haveyoursay"
+Issues = "https://github.com/ghxm/haveyoursay/issues"
+
+[project.scripts]
+haveyoursay = "haveyoursay.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
+version = {attr = "haveyoursay.__version__"}
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

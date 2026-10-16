@@ -1,0 +1,38 @@
+{
+  "2001": [
+    {"id": 5001, "tr_number": null, "language": "en", "country": "DEU", "organization": null,
+     "surname": "Doe", "firstName": "Jane", "status": "PUBLISHED", "publicationStatus": "PUBLISHED",
+     "feedback": "I welcome this initiative.\nSecond line with \"quotes\" and a back\\slash.",
+     "dateFeedback": "2024/01/20 10:15:00", "publication": "Shared call for evidence",
+     "userType": "EU_CITIZEN", "companySize": null, "referenceInitiative": "Ares(2024)100001",
+     "attachments": []},
+    {"id": 5002, "tr_number": "123456789012-34", "language": "en", "country": "BEL",
+     "organization": "Example Industry Association", "surname": "Roe", "firstName": "Richard",
+     "status": "PUBLISHED", "publicationStatus": "PUBLISHED", "feedback": "Please see the attached position paper.",
+     "dateFeedback": "2024/02/01 16:45:00", "publication": "Shared call for evidence",
+     "userType": "BUSINESS_ASSOCIATION", "companySize": "LARGE", "referenceInitiative": "Ares(2024)100001",
+     "attachments": [
+       {"id": 6001, "documentId": "090166e5f0000101", "ersFileName": "Position paper R. Roe.pdf",
+        "title": "Position paper of the association", "category": "FEEDBACK", "pages": 12, "size": 450000}
+     ]},
+    {"id": 5003, "tr_number": null, "language": "fr", "country": "FRA", "organization": "Jean Dupont Consulting",
+     "surname": "Dupont", "firstName": "Jean", "status": "PUBLISHED", "publicationStatus": "PUBLISHED",
+     "feedback": "Commentaire.", "dateFeedback": "2024/02/02 09:00:00", "publication": "Shared call for evidence",
+     "userType": "NON_EU_CITIZEN", "companySize": null, "referenceInitiative": "Ares(2024)100001",
+     "attachments": []}
+  ],
+  "2002": [
+    {"id": 5004, "tr_number": null, "language": "en", "country": "NLD", "organization": "Example NGO",
+     "surname": "Smith", "firstName": "Sam", "status": "PUBLISHED", "publicationStatus": "PUBLISHED",
+     "feedback": "NGO response to the consultation.", "dateFeedback": "2024/04/10 11:00:00",
+     "publication": "Public consultation on the first initiative", "userType": "NGO", "companySize": null,
+     "referenceInitiative": "Ares(2024)100001", "attachments": []}
+  ],
+  "2003": [
+    {"id": 5005, "tr_number": "987654321098-76", "language": "en", "country": "ITA", "organization": "Example Company",
+     "surname": null, "firstName": null, "status": "PUBLISHED", "publicationStatus": "PUBLISHED",
+     "feedback": "Company feedback on the proposal.", "dateFeedback": "2025/02/20 14:30:00",
+     "publication": "Proposal for a regulation on the second initiative", "userType": "COMPANY",
+     "companySize": "SME", "referenceInitiative": "Ares(2024)100002", "attachments": []}
+  ]
+}
